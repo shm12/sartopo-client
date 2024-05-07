@@ -18,7 +18,10 @@ class Map(BaseObj):
         if not id_:
             return ''
         return urlparse(self._url())._replace(path=f'/m/{id_}').geturl()
-
+    
+    def delete(self):
+        return self.client.delete_map(self.data['id'])
+    
     def fetch_items(self):
         res = self.client.session.get(f'{self._url()}/since/0')
         assert res.status_code == 200 and res.json(
@@ -40,13 +43,27 @@ class Map(BaseObj):
                 items.append(i)
 
         return items
+    
+    def add_item(self, item):
+        """lets you add to the map any map item
 
-    def _add_element(self, data, cls):
+        Args:
+            item (BaseItem): the item to add to the map
+
+        Returns:
+            BaseItem: the item that has been added to the map
+        """
+        item.base_url = self._url()
+        item.upload()
+        return item
+
+    def _add_element(self, data, cls, folder=None):
+        if folder:
+            data['properties']['folderID'] = folder.data['id']
         m = cls(self._url(), data, self.user_id, self.client)
-        m.upload()
-        return m
+        return self.add_item(m)
 
-    def add_marker(self, title, coordinates, description=None, size=1, symbol='point', color="FF0000", rotation=None):
+    def add_marker(self, title, coordinates, description=None, size=1, symbol='point', color="FF0000", rotation=None, folder=None):
         data = {
             "type": "Feature",
             "geometry": {
@@ -63,7 +80,7 @@ class Map(BaseObj):
             }
         }
 
-        return self._add_element(data, Marker)
+        return self._add_element(data, Marker, folder)
 
     def add_shape(self,
                   shape_type,
@@ -75,6 +92,7 @@ class Map(BaseObj):
                   stroke="#FF0000",
                   pattern="solid",
                   fill="#FF0000",
+                  folder=None,
                   ):
 
         data = {
@@ -93,7 +111,7 @@ class Map(BaseObj):
             }
         }
 
-        return self._add_element(data, Shape)
+        return self._add_element(data, Shape, folder)
 
     def add_line(self,
                  title,
@@ -104,6 +122,7 @@ class Map(BaseObj):
                  stroke="#FF0000",
                  pattern="solid",
                  fill="#FF0000",
+                 folder=None,
                  ):
         return self.add_shape('LineString',
                               title,
@@ -113,7 +132,9 @@ class Map(BaseObj):
                               opacity,
                               stroke,
                               pattern,
-                              fill)
+                              fill,
+                              folder
+                              )
 
     def add_polygon(self,
                     title,
@@ -124,6 +145,7 @@ class Map(BaseObj):
                     stroke="#FF0000",
                     pattern="solid",
                     fill="#FF0000",
+                    folder=None,
                     ):
         return self.add_shape('Polygon',
                               title,
@@ -133,9 +155,11 @@ class Map(BaseObj):
                               opacity,
                               stroke,
                               pattern,
-                              fill)
+                              fill,
+                              folder,
+                              )
 
-    def add_folder(self, title, visible=True, label_visible=True):
+    def add_folder(self, title, visible=True, label_visible=True, folder=None):
         data = {
             "properties": {
                 "title": title,
@@ -144,4 +168,4 @@ class Map(BaseObj):
             },
         }
 
-        return self._add_element(data, Folder)
+        return self._add_element(data, Folder, folder)

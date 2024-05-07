@@ -84,11 +84,30 @@ class SarTopoClient(object):
 
     def list_maps(self):
         return self._list('tenants', Map)
+    
+    def _get_item_by_id(self, item_id, l):
+        # We can improve the complexity here but since it is
+        # a small list most of the time it's not necessary
+        for i in l:
+            data = i
+            if type(i) is not dict:
+                data = i.data
+            if data['id'] == item_id:
+                return i
+        
+        raise ValueError(f'could not find {item_id}')
+                
+        
+    def get_map(self, map_id):
+        return self._get_item_by_id(map_id, self.list_maps())
+    
+    def get_folder(self, folder_id):
+        return self._get_item_by_id(folder_id, self.list_maps())
 
     def api_action(self, method, url, json=None):
         res = self.session.request(method, url, json=json)
         assert res.status_code == 200 and res.json(
-        )['status'] == 'ok', f'Failed to {mathod} {url}. code: {res.status_code}, reason: {res.text}'
+        )['status'] == 'ok', f'Failed to {method} {url}. code: {res.status_code}, reason: {res.text}'
         return res.json()['result']
     # Folder manipulations
 
