@@ -81,12 +81,17 @@ class SarTopoClient(object):
 
     def list_pdfs(self):
         return self._list('pdfs')
-    
+
     def list_maps(self):
         return self._list('tenants', Map)
-    
 
+    def api_action(self, method, url, json=None):
+        res = self.session.request(method, url, json=json)
+        assert res.status_code == 200 and res.json(
+        )['status'] == 'ok', f'Failed to {mathod} {url}. code: {res.status_code}, reason: {res.text}'
+        return res.json()['result']
     # Folder manipulations
+
     def _base_data(self, cls, title, synced=True, folder_id=None):
         data = {
             "properties": {
@@ -119,7 +124,7 @@ class SarTopoClient(object):
         """
         data = self._folder_data(title, synced, parent_id)
         uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.FOLDER}'
-        return self.session.post(uri, json=data)
+        return self.api_action('POST', uri, json=data)
 
     def delete_folder(self, folder_id):
         """Deletes a folder
@@ -132,7 +137,7 @@ class SarTopoClient(object):
         """
 
         uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.FOLDER}/{folder_id}'
-        return self.session.delete(uri)
+        return self.api_action('DELETE', uri)
 
     def update_folder(self, folder_id, title, synced=True, parent_id=''):
         """Updates a folder
@@ -148,7 +153,7 @@ class SarTopoClient(object):
         """
         data = self._folder_data(title, synced, parent_id)
         uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.FOLDER}/{folder_id}'
-        return self.session.post(uri, json=data)
+        return self.api_action('POST', uri, json=data)
 
 # map manipulations
     def _map_data(self, title, synced=True,  parent_id='', sharing='URL', mode='cal', description=None):
@@ -179,7 +184,7 @@ class SarTopoClient(object):
         """
         data = self._map_data(title, synced, parent_folder, sharing, mode)
         uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.MAP}'
-        return self.session.post(uri, json=data)
+        return self.api_action('POST', uri, json=data)
 
     def delete_map(self, map_id):
         """Deletes a map
@@ -192,7 +197,7 @@ class SarTopoClient(object):
         """
 
         uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.MAP}/{map_id}'
-        return self.session.delete(uri)
+        return self.api_action('DELETE', uri)
 
     def update_map(self, title, synced=True, parent_folder=None, sharing='URL', mode='cal'):
         """Updates a map
@@ -209,23 +214,4 @@ class SarTopoClient(object):
         data = self._map_data(title, synced, parent_folder, sharing, mode)
 
         uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.MAP}/{map_id}'
-        return self.session.post(uri, json=data)
-
-    def update_map(self, title, synced=True, parent_folder=None, sharing='URL', mode='cal'):
-        """Updates a map
-
-        Args:
-            map_id (str): map id to update
-            title (str): title for the map
-            synced (bool, optional): wether to set the new map as synced or not. Defaults to True.
-            parent (str, optional): parent folder id. Defaults to ''.
-
-        Returns:
-            _type_: _description_
-        """
-        data = self._map_data(title, synced, parent_folder, sharing, mode)
-
-        uri = f'{self.base_url}{self.V1}/{self.ACCT_URL}/{self.user_id}/{self.MAP}/{map_id}'
-        return self.session.post(uri, json=data)
-
-
+        return self.api_action('POST', uri, json=data)

@@ -9,7 +9,7 @@ class Map(BaseObj):
 
     def __init__(self, base_url, data, user_id, client) -> None:
         super(Map, self).__init__(base_url, data, user_id, client)
-        self.base_url = f'{base_url}{client.V1}/map/{data["id"]}'
+        self.base_url = f'{base_url}{client.V1}'
         self.items = []
         self.items_data = {}
 
@@ -17,10 +17,10 @@ class Map(BaseObj):
         id_ = self.data.get('id', None)
         if not id_:
             return ''
-        return urlparse(self.base_url)._replace(path=f'/m/{id_}').geturl()
+        return urlparse(self._url())._replace(path=f'/m/{id_}').geturl()
 
     def fetch_items(self):
-        res = self.client.session.get(f'{self.base_url}/since/0')
+        res = self.client.session.get(f'{self._url()}/since/0')
         assert res.status_code == 200 and res.json(
         )['status'] == 'ok', f'Failed to fetch map items. code: {res.status_code}, reason: {res.text}'
 
@@ -35,14 +35,14 @@ class Map(BaseObj):
             kind = i['properties']['class']
             if kind in kind_to_map_item:
                 items.append(kind_to_map_item[kind](
-                    self.base_url, i, self.user_id, self.client))
+                    self._url(), i, self.user_id, self.client))
             else:
                 items.append(i)
 
         return items
 
     def _add_element(self, data, cls):
-        m = cls(self.base_url, data, self.user_id, self.client)
+        m = cls(self._url(), data, self.user_id, self.client)
         m.upload()
         return m
 
