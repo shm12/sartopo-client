@@ -9,6 +9,12 @@ class BaseObj(object):
         self.client = client
         self.base_url = base_url
 
+    def fetch(self):
+        res = self.client.session.get(self._url())
+        assert res.status_code == 200 and res.json(
+        )['status'] == 'ok', f'Failed to fetch {self.KIND} data. code: {res.status_code}, reason: {res.text}'
+        self.data = res.json()['result']
+
     def _url(self):
         url = f'{self.base_url}/{self.KIND}'
 
@@ -18,15 +24,12 @@ class BaseObj(object):
 
         return url
 
-    def _create(self, kind, data):
-        res = self.client.session.post(self._url(), json=data)
-        assert res.sta
-
     def upload(self):
         """Create or update the object in the remote server
         """
         res = self.client.session.post(self._url(), json=self.data)
-        assert res.status_code == 200 and res.json()['status'] == 'ok', f'Failed to upload {self.KIND} data. code: {res.status_code}, reason: {res.text}'
+        assert res.status_code == 200 and res.json(
+        )['status'] == 'ok', f'Failed to upload {self.KIND} data. code: {res.status_code}, reason: {res.text}'
         self.data = res.json()['result']
 
     def delete(self):
