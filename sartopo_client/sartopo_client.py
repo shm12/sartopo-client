@@ -1,6 +1,7 @@
 import requests
 from sartopo_client.auth import MyAuth
 from sartopo_client.map import Map
+from sartopo_client.consts import PROPERTIES, ID, FOLDER_ID
 
 SARTOPO_URL = 'https://sartopo.com'
 CALTOPO_URL = 'https://caltopo.com'
@@ -92,7 +93,7 @@ class SarTopoClient(object):
             data = i
             if type(i) is not dict:
                 data = i.data
-            if data['id'] == item_id:
+            if data[ID] == item_id:
                 return i
         
         raise ValueError(f'could not find {item_id}')
@@ -122,13 +123,12 @@ class SarTopoClient(object):
         }
 
         if folder_id:
-            data['properties']['folderId'] = folder_id
+            data[PROPERTIES][FOLDER_ID] = folder_id
 
         return data
 
     def _folder_data(self, title, synced=True, parent_id=None):
-        data = self._base_data(self.FOLDER, title, synced, parent_id)
-        return data
+        return self._base_data(self.FOLDER, title, synced, parent_id)
 
     def add_folder(self, title, synced=True, parent_id=None):
         """Adds new folder
@@ -177,11 +177,11 @@ class SarTopoClient(object):
 # map manipulations
     def _map_data(self, title, synced=True,  parent_id='', sharing='URL', mode='cal', description=None):
         data = self._base_data(self.FOLDER, title, synced, parent_id)
-        data['properties']['mode'] = mode
-        data['properties']['sharing'] = sharing
+        data[PROPERTIES]['mode'] = mode
+        data[PROPERTIES]['sharing'] = sharing
 
         if description:
-            data['properties']['description'] = description
+            data[PROPERTIES]['description'] = description
 
         # TODO: fill this data
         data['state'] = {

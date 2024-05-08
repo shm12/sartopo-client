@@ -14,15 +14,15 @@ class Map(BaseObj):
         self.items_data = {}
 
     def public_url(self):
-        id_ = self.data.get('id', None)
+        id_ = self.data.get(ID, None)
         if not id_:
             return ''
         return urlparse(self._url())._replace(path=f'/m/{id_}').geturl()
-    
+
     def delete(self):
-        return self.client.delete_map(self.data['id'])
-    
-    def fetch_items(self):
+        return self.client.delete_map(self.data[ID])
+
+    def list_items(self):
         res = self.client.session.get(f'{self._url()}/since/0')
         assert res.status_code == 200 and res.json(
         )['status'] == 'ok', f'Failed to fetch map items. code: {res.status_code}, reason: {res.text}'
@@ -35,7 +35,7 @@ class Map(BaseObj):
         items = []
 
         for i in self.items_data['state']['features']:
-            kind = i['properties']['class']
+            kind = i[PROPERTIES]['class']
             if kind in kind_to_map_item:
                 items.append(kind_to_map_item[kind](
                     self._url(), i, self.user_id, self.client))
@@ -43,8 +43,8 @@ class Map(BaseObj):
                 items.append(i)
 
         return items
-    
-    def add_item(self, item):
+
+    def add_item(self, item: BaseObj):
         """lets you add to the map any map item
 
         Args:
@@ -53,14 +53,20 @@ class Map(BaseObj):
         Returns:
             BaseItem: the item that has been added to the map
         """
-        item.base_url = self._url()
+        item._set_connection(self._url(), self.user_id, self.client)
+        item.map = self
         item.upload()
         return item
 
     def _add_element(self, data, cls, folder=None):
         if folder:
-            data['properties']['folderID'] = folder.data['id']
-        m = cls(self._url(), data, self.user_id, self.client)
+            if type(folder) is str:
+                data[PROPERTIES][FOLDER_ID] = folder
+            elif type(folder) is Folder:
+                data[PROPERTIES][FOLDER_ID] = folder.data[ID]
+            else:
+                raise ValueError(f'folder must be of type Folder or str as a folder id (got {type(folder)})')
+        m = cls(self._url(), data, self.user_id, self.client, map=self)
         return self.add_item(m)
 
     def add_marker(self, title, coordinates, description=None, size=1, symbol='point', color="FF0000", rotation=None, folder=None):
@@ -169,3 +175,28 @@ class Map(BaseObj):
         }
 
         return self._add_element(data, Folder, folder)
+
+    def add_fleet_live_track(self,
+                       title,
+                       group,
+                       deviceId,
+                       stroke_width=2,
+                       opacity=1,
+                       stroke="#FF0000",
+                       pattern="M0 -3 L0 3,,12,F",
+                       folder=None
+                       ):
+        data = {
+            "properties": {
+                "stroke-opacity": opacity,
+                "pattern": pattern,
+                "stroke-width": stroke_width,
+                "title": title,
+                "deviceId": f'FLEET:{group}-{deviceId}',
+                "stroke": stroke,
+                "class": "LiveTrack",
+            }
+        }
+
+        return self._add_element(data, LiveTrack, folder)
+
