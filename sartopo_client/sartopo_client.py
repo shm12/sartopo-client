@@ -55,39 +55,49 @@ class SarTopoClient(object):
         return res.json()['result']
 
     # convenient getter methods
-    def _list(self, kind, cls=None):
+    def _list(self, kind, cls=None, groups=True):
         self.update_user_data()
         ret = self.user_data.get('account', {}).get(kind, [])
+        
+        if groups:
+            for g in self.user_data.get('account', {}).get('groupAccounts', []):
+                ret += g.get(kind, [])
+        
         if cls:
-            return [cls(self.base_url, i, self.user_id, self) for i in ret]
+            ret = [cls(self.base_url, i, self.user_id, self) for i in ret]
         return ret
-
-    def list_folders(self):
-        return self._list('folders')
-
-    def list_credentials(self):
-        return self._list('credentials')
-
-    def list_layers(self):
-        return self._list('layers')
-
-    def list_short_links(self):
-        return self._list('shortLinks')
-
-    def list_icons(self):
-        return self._list('icons')
-
-    def list_tracks(self):
-        return self._list('tracks')
-
-    def list_pdfs(self):
-        return self._list('pdfs')
-
-    def list_maps(self):
-        return self._list('tenants', Map)
     
-    def list_bookmarks(self):
-        return self._list('bookmarks', Map)
+
+    def list_folders(self, groups=True):
+        return self._list('folders', groups=groups)
+
+    def list_credentials(self, groups=True):
+        return self._list('credentials', groups=groups)
+
+    def list_layers(self, groups=True):
+        return self._list('layers', groups=groups)
+
+    def list_short_links(self, groups=True):
+        return self._list('shortLinks', groups=groups)
+
+    def list_icons(self, groups=True):
+        return self._list('icons', groups=groups)
+
+    def list_tracks(self, groups=True):
+        return self._list('tracks', groups=groups)
+
+    def list_pdfs(self, groups=True):
+        return self._list('pdfs', groups=groups)
+
+    def list_maps(self, groups=True):
+        return self._list('tenants',Map, groups=groups)
+    
+    def list_bookmarks(self, groups=True):
+        return self._list('bookmarks', Map, groups=groups)
+    
+    def list_group_accounts(self):
+        return self._list('groupAccounts')
+        
     
     def _get_item_by_id(self, item_id, l):
         # We can improve the complexity here but since it is
