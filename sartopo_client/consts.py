@@ -17,4 +17,5 @@ MAP_MEDIA_OBJECT = 'MapMediaObject'
 # common strings
 PROPERTIES = 'properties'
 FOLDER_ID = 'folderId'
+MAP_ID = 'mapId'
 ID = 'id'

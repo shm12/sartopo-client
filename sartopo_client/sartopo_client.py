@@ -86,10 +86,15 @@ class SarTopoClient(object):
     def list_maps(self):
         return self._list('tenants', Map)
     
+    def list_bookmarks(self):
+        return self._list('bookmarks', Map)
+    
     def _get_item_by_id(self, item_id, l):
         # We can improve the complexity here but since it is
         # a small list most of the time it's not necessary
         for i in l:
+            if hasattr(i, 'get_id') and i.get_id() == item_id:
+                return i
             data = i
             if type(i) is not dict:
                 data = i.data
@@ -99,8 +104,16 @@ class SarTopoClient(object):
         raise ValueError(f'could not find {item_id}')
                 
         
-    def get_map(self, map_id):
-        return self._get_item_by_id(map_id, self.list_maps())
+    def get_map(self, map_id) -> Map:
+        """get map by it's id
+
+        Args:
+            map_id (str): map id
+
+        Returns:
+            Map: the map
+        """
+        return self._get_item_by_id(map_id, self.list_maps() + self.list_bookmarks())
     
     def get_folder(self, folder_id):
         return self._get_item_by_id(folder_id, self.list_maps())

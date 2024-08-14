@@ -57,7 +57,6 @@ class LiveTrack(BaseObj):
         
         raise NotImplementedError('cannot report other types than FLEET LiveTrack')
 
-
 class Folder(BaseObj):
     KIND = FOLDER
 
@@ -87,7 +86,7 @@ class Folder(BaseObj):
         """
         # TODO: validate it's in the folder?
         
-        item.data[PROPERTIES][FOLDER_ID] = ''
+        item.data[PROPERTIES][FOLDER_ID] = None
         item.upload()
     
     def list_items(self):
@@ -98,7 +97,7 @@ class Folder(BaseObj):
         """
         assert self.map, 'cannot list folder that is not inside a map'
         map_items = self.map.list_items()
-        return [i for i in map_items if i.data[PROPERTIES][FOLDER_ID] == self.data[PROPERTIES][FOLDER_ID]]
+        return [i for i in map_items if i.data[PROPERTIES].get(FOLDER_ID, '') == self.get_id()]
 
 
 class Locator(BaseObj):

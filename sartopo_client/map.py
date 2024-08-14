@@ -13,14 +13,17 @@ class Map(BaseObj):
         self.items = []
         self.items_data = {}
 
+    def get_id(self):
+        return self.data.get(PROPERTIES, {}).get(MAP_ID, None) or super(Map, self).get_id()
+    
     def public_url(self):
-        id_ = self.data.get(ID, None)
+        id_ = self.get_id()
         if not id_:
             return ''
         return urlparse(self._url())._replace(path=f'/m/{id_}').geturl()
 
     def delete(self):
-        return self.client.delete_map(self.data[ID])
+        return self.client.delete_map(self.get_id())
 
     def list_items(self):
         res = self.client.session.get(f'{self._url()}/since/0')
@@ -63,13 +66,23 @@ class Map(BaseObj):
             if type(folder) is str:
                 data[PROPERTIES][FOLDER_ID] = folder
             elif type(folder) is Folder:
-                data[PROPERTIES][FOLDER_ID] = folder.data[ID]
+                data[PROPERTIES][FOLDER_ID] = folder.get_id()
             else:
-                raise ValueError(f'folder must be of type Folder or str as a folder id (got {type(folder)})')
-        m = cls(self._url(), data, self.user_id, self.client, map=self)
+                raise ValueError(
+                    f'folder must be of type Folder or str as a folder id (got {type(folder)})')
+        m = cls(self._url(), data, self.user_id, self.client, map_=self)
         return self.add_item(m)
 
-    def add_marker(self, title, coordinates, description=None, size=1, symbol='point', color="FF0000", rotation=None, folder=None):
+    def add_marker(self,
+                   title,
+                   coordinates,
+                   description=None,
+                   size=1,
+                   symbol='point',
+                   color="FF0000",
+                   rotation=None,
+                   folder=None,
+                   ) -> Marker:
         data = {
             "type": "Feature",
             "geometry": {
@@ -99,7 +112,7 @@ class Map(BaseObj):
                   pattern="solid",
                   fill="#FF0000",
                   folder=None,
-                  ):
+                  ) -> Shape:
 
         data = {
             "properties": {
@@ -129,7 +142,7 @@ class Map(BaseObj):
                  pattern="solid",
                  fill="#FF0000",
                  folder=None,
-                 ):
+                 ) -> Shape:
         return self.add_shape('LineString',
                               title,
                               coordinates,
@@ -152,7 +165,7 @@ class Map(BaseObj):
                     pattern="solid",
                     fill="#FF0000",
                     folder=None,
-                    ):
+                    ) -> Shape:
         return self.add_shape('Polygon',
                               title,
                               coordinates,
@@ -165,7 +178,7 @@ class Map(BaseObj):
                               folder,
                               )
 
-    def add_folder(self, title, visible=True, label_visible=True, folder=None):
+    def add_folder(self, title, visible=True, label_visible=True, folder=None) -> Folder:
         data = {
             "properties": {
                 "title": title,
@@ -177,15 +190,15 @@ class Map(BaseObj):
         return self._add_element(data, Folder, folder)
 
     def add_fleet_live_track(self,
-                       title,
-                       group,
-                       deviceId,
-                       stroke_width=2,
-                       opacity=1,
-                       stroke="#FF0000",
-                       pattern="M0 -3 L0 3,,12,F",
-                       folder=None
-                       ):
+                             title,
+                             group,
+                             deviceId,
+                             stroke_width=2,
+                             opacity=1,
+                             stroke="#FF0000",
+                             pattern="M0 -3 L0 3,,12,F",
+                             folder=None
+                             ) -> LiveTrack:
         data = {
             "properties": {
                 "stroke-opacity": opacity,
@@ -199,4 +212,3 @@ class Map(BaseObj):
         }
 
         return self._add_element(data, LiveTrack, folder)
-

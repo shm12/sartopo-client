@@ -30,16 +30,19 @@ class BaseObj(object):
         self.client = client
         self.base_url = base_url
 
-    def fetch(self):
-        res = self.client.session.get(self._url())
-        assert res.status_code == 200 and res.json(
-        )['status'] == 'ok', f'Failed to fetch {self.KIND} data. code: {res.status_code}, reason: {res.text}'
-        self.data = res.json()['result']
-
+    def refresh(self):
+        for i in self.map.list_items():
+            if i.data[ID] == self.data[ID]:
+                self.data = i.data
+                break
+    
+    def get_id(self):
+        return self.data.get(ID, None)
+        
     def _url(self):
         url = f'{self.base_url}/{self.KIND}'
 
-        id_ = self.data.get(ID, None)
+        id_ = self.get_id()
         if id_:  # --> already exists
             url = f'{url}/{id_}'
 
